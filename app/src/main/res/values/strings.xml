@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Puzzle game</string>
+    <string name="app_title">Puzzle Game</string>
+    <string name="preference_file_key">PREFERENCE_FILE_KEY</string>
+
+    <!-- First button text -->
+
+    <string name="new_game">New Game</string>
+
+
+    <!-- Second button text -->
+
+    <string name="upload_picture">Upload Picture</string>
+
+    <!-- Success message -->
+
+    <string name="high_score">Bravo!</string>
+
+
+    <!-- Game statistics -->
+
+
+    <string name="timer">Timer:&#xA0;</string>
+
+    <!-- Puzzle images -->
+    <string name="default_image">DOG</string>
+    <string-array name="puzzle_images">
+        <item>DOG</item>
+        <item>NATURE</item>
+        <item>CAT</item>>
+        <item>CUSTOM</item>
+    </string-array>
+
+
+</resources>
