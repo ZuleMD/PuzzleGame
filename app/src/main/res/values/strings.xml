@@ -6,6 +6,7 @@
     <!-- First button text -->
 
     <string name="new_game">New Game</string>
+    <string name="moves">Moves:</string>
 
 
     <!-- Second button text -->

@@ -2,6 +2,7 @@ package n.rnu.isetr.puzzlegame
 
 import Puzzle.Helpimpl.*
 import Puzzle.Helpimpl.SpinnerAdapter
+import Puzzle.Helpimpl.Timer
 import android.content.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -17,9 +18,6 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -51,13 +49,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnCamera: Button
     private lateinit var btnShuffle: Button
     private lateinit var tvMoveNumber: TextView
+    private  lateinit var tvMove:TextView
     private lateinit var tvTimeTaken: TextView
+    private lateinit var tvTime:TextView
     private lateinit var spnPuzzle: Spinner
-    private lateinit var tvTitle: TextView
     private lateinit var tvSuccess: TextView
     private lateinit var sp: SharedPreferences
     private var tileDimen: Int = 0
     private var puzzleDimen: Int = 0
+    private var BestScore:Int=100
     private lateinit var goalPuzzleState: ArrayList<Int>
     private lateinit var puzzleState: ArrayList<Int>
     private var blankTilePos: Int = BLANK_TILE_MARKER
@@ -67,10 +67,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imageChunks: ArrayList<Bitmap>
     private lateinit var blankImageChunks: ArrayList<Bitmap>
     private lateinit var tileImages: ArrayList<ImageButton>
-
-    private lateinit var puzzleImageChoices: Array<PuzzleImage>
+    private lateinit var puzzleImageChoices: Array<PuzzleImages>
     private var puzzleImageIndex: Int = 0
-
     private var indexOfCustom: Int = 0
     private var isGalleryImageChosen: Boolean = false
     private lateinit var shuffleRunnable: ShuffleRunnable
@@ -88,40 +86,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //Hides the app bar
         window.setFlags(
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
+
         initComponents()
         initSharedPreferences()
         initHandlers()
         initStateAndTileImages()
         initPuzzle()
-    }
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            hideSystemUI()
-        }
-    }
-
-    private fun hideSystemUI() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, clRoot).let {
-            it.hide(WindowInsetsCompat.Type.systemBars())
-            it.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (isGalleryImageChosen) {
-            isGalleryImageChosen = false
-        } else {
-            spnPuzzle.setSelection(puzzleImageIndex)
-        }
     }
 
     private fun initComponents() {
@@ -132,8 +107,9 @@ class MainActivity : AppCompatActivity() {
         btnCamera = findViewById(R.id.btncamera)
         setBtnCameraAction()
         tvMoveNumber = findViewById(R.id.tv_move_number)
+        tvMove=findViewById(R.id.tv_move)
         tvTimeTaken = findViewById(R.id.tv_time_taken)
-        tvTitle = findViewById(R.id.tv_title)
+        tvTime=findViewById(R.id.tv_time)
         tvSuccess = findViewById(R.id.tv_success)
         tvSuccess.setOnClickListener {
             tvSuccess.visibility = View.GONE
@@ -142,18 +118,20 @@ class MainActivity : AppCompatActivity() {
         spnPuzzle = findViewById(R.id.spn_puzzle)
         spnPuzzle.adapter = SpinnerAdapter(
             this,
-            R.layout.spn_puzzle_item,
+            R.layout.spinner_item,
             resources.getStringArray(R.array.puzzle_images)
         )
-        puzzleImageChoices = PuzzleImage.values()
+        puzzleImageChoices = PuzzleImages.values()
         indexOfCustom = puzzleImageChoices.lastIndex
     }
 
+    ///Retrieves the values stored using shared preferences
     private fun initSharedPreferences() {
         sp = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
 
     }
 
+    //Initializes the handlers related to shuffling the tiles and triggering the game timer
     private fun initHandlers() {
         shuffleScheduler = Executors.newScheduledThreadPool(NUM_TILES)
         shuffleHandler = object : Handler(Looper.getMainLooper()) {
@@ -166,10 +144,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         timerHandler = Handler(Looper.getMainLooper())
-
-
     }
 
+    //Initializes the puzzle state and the images of the tiles in the grid
     private fun initStateAndTileImages() {
         goalPuzzleState = ArrayList(NUM_TILES)
         puzzleState = ArrayList(NUM_TILES)
@@ -182,11 +159,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun resetState() {
-        puzzleState = goalPuzzleState.toMutableList() as ArrayList<Int>
-        blankTilePos = BLANK_TILE_MARKER
-    }
-
+    //Initializes the dynamic components and listeners related to the puzzle grid
     private fun initPuzzle() {
         setTouchSlopThreshold()
         setOnFlingListener()
@@ -194,6 +167,25 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    override fun onResume() {
+        super.onResume()
+
+        if (isGalleryImageChosen) {
+            isGalleryImageChosen = false
+        } else {
+            spnPuzzle.setSelection(puzzleImageIndex)
+        }
+    }
+
+    //Resets the puzzle state back to the original state (that is, the goal state)
+    private fun resetState() {
+        puzzleState = goalPuzzleState.toMutableList() as ArrayList<Int>
+        blankTilePos = BLANK_TILE_MARKER
+    }
+
+    /************************************************************************/
+
+    //Camera and Gallery
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
@@ -206,24 +198,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-
-    private fun setBtnShuffleAction() {
-        btnShuffle.setOnClickListener {
-            if (!isGameInSession) {
-                shuffle()
-            }
-        }
-    }
-
-
-
     private fun setBtnCameraAction(){
         btnCamera.setOnClickListener {
             cameraCheckPermission()
         }
     }
-
     private fun galleryCheckPermission() {
 
         Dexter.withContext(this).withPermission(
@@ -248,13 +227,11 @@ class MainActivity : AppCompatActivity() {
             }
         }).onSameThread().check()
     }
-
     private fun gallery() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         startActivityForResult(intent, GALLERY_REQUEST_CODE)
     }
-
     private fun cameraCheckPermission() {
 
         Dexter.withContext(this)
@@ -282,7 +259,6 @@ class MainActivity : AppCompatActivity() {
                 }
             ).onSameThread().check()
     }
-
     private fun showRotationalDialogForPermission() {
         AlertDialog.Builder(this)
             .setMessage("It looks like you have turned off permissions"
@@ -305,7 +281,6 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }.show()
     }
-
     private fun camera() {
         val values = ContentValues()
         values.put(MediaStore.Images.Media.TITLE, "New Picture")
@@ -316,7 +291,9 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE)
 
     }
+    /************************************************************************/
 
+    //Sets the item selection event listener for the spinner
     private fun setSpnPuzzleAction() {
         spnPuzzle.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
 
@@ -336,18 +313,18 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
-
+    //Resets the statistics displayed (setting their values to 0) at the start of a game (that is immediately after the shuffling animation finishes).
     private fun resetDisplayedStats() {
         numMoves = 0
         tvMoveNumber.text = numMoves.toString()
         timeTaken = 0
-        tvTimeTaken.text = TimeUtil.displayTime(timeTaken)
+        tvTimeTaken.text = Timer.displayTime(timeTaken)
     }
-
+    //Sets the distance in pixels a touch can wander before it is registered as a fling gesture.
     private fun setTouchSlopThreshold() {
         gvgPuzzle.setTouchSlopThreshold(ViewConfiguration.get(this).scaledTouchSlop)
     }
-
+    //Sets the listener for responding to detected fling gestures.
     private fun setOnFlingListener() {
         gvgPuzzle.setFlingListener(object : OnFlingListener {
             override fun onFling(direction: FlingDirection, position: Int) {
@@ -356,6 +333,9 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /************************************************************************/
+
+    //Sets the dimensions of the puzzle grid and its individual tiles.
     private fun setDimensions() {
         gvgPuzzle.viewTreeObserver.addOnGlobalLayoutListener(object :
             ViewTreeObserver.OnGlobalLayoutListener {
@@ -373,6 +353,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    //Puzzle Image and Grid
     private fun initPuzzleImage() {
         puzzleImageIndex = sp.getInt(Key.KEY_PUZZLE_IMAGE.name, 0)
         spnPuzzle.setSelection(puzzleImageIndex)
@@ -386,7 +367,6 @@ class MainActivity : AppCompatActivity() {
             puzzleDimen
         )
     }
-
     private fun initChunks() {
         imageChunks =
             ImageUtil.splitBitmap(
@@ -403,7 +383,6 @@ class MainActivity : AppCompatActivity() {
                 NUM_COLUMNS
             ).second
     }
-
     private fun displayPuzzle() {
 
         for ((position, tile) in puzzleState.withIndex()) {
@@ -416,7 +395,6 @@ class MainActivity : AppCompatActivity() {
 
         gvgPuzzle.adapter = TileAdapter(tileImages, tileDimen, tileDimen)
     }
-
     private fun displayBlankPuzzle() {
         for ((position, tile) in puzzleState.withIndex()) {
             if (position == blankTilePos) {
@@ -427,7 +405,6 @@ class MainActivity : AppCompatActivity() {
         }
         gvgPuzzle.adapter = TileAdapter(tileImages, tileDimen, tileDimen)
     }
-
     private fun loadPuzzle(position: Int) {
         tvSuccess.visibility = View.GONE
         resetState()
@@ -436,7 +413,6 @@ class MainActivity : AppCompatActivity() {
         initChunks()
         displayPuzzle()
     }
-
     private fun updatePuzzleImage(position: Int) {
         puzzleImageIndex = position
 
@@ -454,6 +430,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //Moving Tiles
     private fun moveTile(direction: FlingDirection, position: Int) {
         var flag = false
 
@@ -476,12 +453,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    fun isSolved(puzzleState: ArrayList<Int>, goalPuzzleState: ArrayList<Int>): Boolean {
+        return puzzleState == goalPuzzleState
+    }
     private fun updateGameStatus(): Boolean {
         if (isGameInSession) {
             trackMove()
 
-            if (SolveUtil.isSolved(puzzleState, goalPuzzleState)) {
+            if (isSolved(puzzleState, goalPuzzleState)) {
 
                 timeTaken--
 
@@ -493,19 +472,17 @@ class MainActivity : AppCompatActivity() {
 
         return false
     }
-
     private fun trackMove() {
         numMoves++
         tvMoveNumber.text = numMoves.toString()
     }
-
     private fun launchTimer() {
         isTimerRunning = true
         timerHandler.post(object : Runnable {
             override fun run() {
                 if (isTimerRunning) {
-                    tvTimeTaken.text = TimeUtil.displayTime(timeTaken++)
-                    timerHandler.postDelayed(this, TimeUtil.SECONDS_TO_MILLISECONDS.toLong())
+                    tvTimeTaken.text = Timer.displayTime(timeTaken++)
+                    timerHandler.postDelayed(this, Timer.SECONDS_TO_MILLISECONDS.toLong())
                 } else {
                     timerHandler.removeCallbacks(this)
                 }
@@ -513,9 +490,21 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /************************************************************************/
+
+    // Shuffling
+    private fun setBtnShuffleAction() {
+        btnShuffle.setOnClickListener {
+            if (!isGameInSession) {
+                shuffle()
+            }
+        }
+    }
     private fun shuffle() {
         btnCamera.visibility=View.INVISIBLE
         btnShuffle.visibility= View.INVISIBLE
+        tvMove.visibility=View.VISIBLE
+        tvTime.visibility=View.VISIBLE
         spnPuzzle.visibility=View.INVISIBLE
         tvSuccess.visibility = View.GONE
 
@@ -525,7 +514,6 @@ class MainActivity : AppCompatActivity() {
         displayBlankPuzzle()
         startShowingTiles()
     }
-
     private fun getValidShuffledState() {
         val shuffledState: StatePair =
             ShuffleUtil.getValidShuffledState(puzzleState, goalPuzzleState, BLANK_TILE_MARKER)
@@ -533,66 +521,45 @@ class MainActivity : AppCompatActivity() {
         puzzleState = shuffledState.puzzleState
         blankTilePos = shuffledState.blankTilePos
     }
-
     private fun updateComponents() {
 
         finishShuffling()
 
     }
-
     private fun finishShuffling() {
         isGameInSession = true
 
         enableClickables()
     }
-
     private fun disableClickables() {
         isPuzzleGridFrozen = true
         btnShuffle.isEnabled = false
         spnPuzzle.isEnabled = false
     }
-
     private fun enableClickables() {
         isPuzzleGridFrozen = false
         btnShuffle.isEnabled = true
     }
-
     private fun showTileAt(position: Int) {
         tileImages[position].setImageBitmap(imageChunks[puzzleState[position]])
 
         gvgPuzzle.adapter = TileAdapter(tileImages, tileDimen, tileDimen)
     }
-
     private fun startShowingTiles() {
         for (position in 0 until tileImages.size) {
             if (position != blankTilePos) {
                 val delay: Long =
-                    ((0..AnimationUtil.SHUFFLING_ANIMATION_UPPER_BOUND).random()
-                            + AnimationUtil.SHUFFLING_ANIMATION_OFFSET).toLong()
+                    ((0..Animation.SHUFFLING_ANIMATION_UPPER_BOUND).random()
+                            + Animation.SHUFFLING_ANIMATION_OFFSET).toLong()
 
                 shuffleRunnable = ShuffleRunnable(shuffleHandler, position, NUM_TILES)
                 shuffleScheduler.schedule(shuffleRunnable, delay, TimeUnit.MILLISECONDS)
             }
         }
     }
+    /************************************************************************/
 
-    private fun endGame() {
-        isGameInSession = false
-        isTimerRunning = false
-
-        displaySuccessMessage()
-    }
-
-    private fun displaySuccessMessage() {
-        tvSuccess.visibility = View.VISIBLE
-        tvSuccess.text ="BRAVO"
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            tvSuccess.visibility = View.GONE
-        }, AnimationUtil.SUCCESS_DISPLAY.toLong())
-    }
-
-
+    //Uploading a Puzzle Image
     private fun loadPuzzle(imagePath: Uri?) {
         isGalleryImageChosen = true
         resetState()
@@ -603,7 +570,6 @@ class MainActivity : AppCompatActivity() {
         initChunks()
         displayPuzzle()
     }
-
     private fun updatePuzzleImage(imagePath: Uri?) {
         puzzleImage = ImageUtil.resizeToSquareBitmap(
             BitmapFactory.decodeStream(
@@ -612,6 +578,38 @@ class MainActivity : AppCompatActivity() {
             puzzleDimen,
             puzzleDimen
         )
+    }
+    /************************************************************************/
+
+    //END OF THE GAME
+    private fun endGame() {
+        isGameInSession = false
+        isTimerRunning = false
+
+        displayScoreMessage()
+    }
+    private fun displayScoreMessage() {
+        tvSuccess.visibility = View.VISIBLE
+        if(timeTaken<=60){//1 minute or less
+            tvSuccess.text ="SCORE: "+BestScore
+
+        }else if(timeTaken>60 && timeTaken<=120){// more than 1 minute and equal or less than 2 minutes
+            tvSuccess.text ="SCORE: "+(BestScore-30)
+
+        }else if(timeTaken>120 && timeTaken<=180){// more than 2 minutes and equal or less than 3 minutes
+            tvSuccess.text ="SCORE: "+(BestScore-60)
+
+        }else if(timeTaken>180 && timeTaken<=240){ // more than 3 minutes and equal or less than 4 minutes
+            tvSuccess.text ="SCORE: "+(BestScore-90)
+
+        }else{//more than 4 minutes
+            tvSuccess.text ="SCORE: "+(BestScore-95)
+
+        }
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            tvSuccess.visibility = View.GONE
+        }, Animation.SUCCESS_DISPLAY.toLong())
     }
 
 }

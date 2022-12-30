@@ -1,6 +1,6 @@
 package Puzzle.Helpimpl
 
-class AnimationUtil {
+class Animation {
 
     companion object {
 

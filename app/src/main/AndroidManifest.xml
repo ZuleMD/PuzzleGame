@@ -23,9 +23,12 @@
         android:theme="@style/Theme.PuzzleGame">
         <activity
             android:name=".MainActivity"
+            android:exported="true" />
+        <activity
+            android:name=".Welcoming_Activity"
             android:configChanges="orientation"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

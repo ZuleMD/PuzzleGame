@@ -13,7 +13,7 @@ class SpinnerAdapter(context: Context?, textViewResourceId: Int, objects: Array<
 
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val dropdown: View = inflater.inflate(R.layout.spn_puzzle_dropdown, parent, false)
+        val dropdown: View = inflater.inflate(R.layout.spinner_dropdown, parent, false)
 
         val entry = dropdown.findViewById<View>(R.id.tv_spn_puzzle_dropdown) as TextView
         entry.text = getItem(position)

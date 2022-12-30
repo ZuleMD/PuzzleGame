@@ -2,7 +2,7 @@ package Puzzle.Helpimpl
 
 import java.util.*
 
-class TimeUtil {
+class Timer {
 
     companion object {
 
