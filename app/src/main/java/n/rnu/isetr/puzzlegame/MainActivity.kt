@@ -31,6 +31,10 @@ import java.util.Collections.swap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import android.content.Intent
+
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -48,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gvgPuzzle: GridViewGesture
     private lateinit var btnCamera: Button
     private lateinit var btnShuffle: Button
+    private lateinit var btnPlayAgain: Button
     private lateinit var tvMoveNumber: TextView
     private  lateinit var tvMove:TextView
     private lateinit var tvTimeTaken: TextView
@@ -104,6 +109,8 @@ class MainActivity : AppCompatActivity() {
         gvgPuzzle = findViewById(R.id.gvg_puzzle)
         btnShuffle = findViewById(R.id.btn_shuffle)
         setBtnShuffleAction()
+        btnPlayAgain=findViewById(R.id.btn_playagain)
+        setBtnPlayAgainAction()
         btnCamera = findViewById(R.id.btncamera)
         setBtnCameraAction()
         tvMoveNumber = findViewById(R.id.tv_move_number)
@@ -165,8 +172,6 @@ class MainActivity : AppCompatActivity() {
         setOnFlingListener()
         setDimensions()
     }
-
-
     override fun onResume() {
         super.onResume()
 
@@ -176,6 +181,7 @@ class MainActivity : AppCompatActivity() {
             spnPuzzle.setSelection(puzzleImageIndex)
         }
     }
+
 
     //Resets the puzzle state back to the original state (that is, the goal state)
     private fun resetState() {
@@ -588,22 +594,32 @@ class MainActivity : AppCompatActivity() {
 
         displayScoreMessage()
     }
+
+   private fun setBtnPlayAgainAction(){
+       btnPlayAgain.setOnClickListener {
+           val intent = intent
+           finish()
+           startActivity(intent)
+       }
+       }
+
     private fun displayScoreMessage() {
         tvSuccess.visibility = View.VISIBLE
+        btnPlayAgain.visibility=View.VISIBLE
         if(timeTaken<=60){//1 minute or less
-            tvSuccess.text ="SCORE: "+BestScore
+            tvSuccess.text ="EXCELLENTE!!\nSCORE: "+BestScore
 
         }else if(timeTaken>60 && timeTaken<=120){// more than 1 minute and equal or less than 2 minutes
-            tvSuccess.text ="SCORE: "+(BestScore-30)
+            tvSuccess.text ="GOOD JOB!!\nSCORE: "+(BestScore-30)
 
         }else if(timeTaken>120 && timeTaken<=180){// more than 2 minutes and equal or less than 3 minutes
-            tvSuccess.text ="SCORE: "+(BestScore-60)
+            tvSuccess.text ="NOT BAD.\nSCORE: "+(BestScore-60)
 
         }else if(timeTaken>180 && timeTaken<=240){ // more than 3 minutes and equal or less than 4 minutes
-            tvSuccess.text ="SCORE: "+(BestScore-90)
+            tvSuccess.text ="TRY AGAIN NEXT TIME..\nSCORE: "+(BestScore-90)
 
         }else{//more than 4 minutes
-            tvSuccess.text ="SCORE: "+(BestScore-95)
+            tvSuccess.text ="TRY AGAIN NEXT TIME..\nSCORE: "+(BestScore-95)
 
         }
 
